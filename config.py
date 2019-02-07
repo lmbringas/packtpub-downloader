@@ -15,5 +15,8 @@ AUTH_ENDPOINT = "auth-v1/users/tokens"
 # URL to get all your books, two params that i change are offset and limit, method GET
 PRODUCTS_ENDPOINT = "entitlements-v1/users/me/products?sort=createdAt:DESC&offset={offset}&limit={limit}"
 
+# URL to get types , param is  book id, method GET
+URL_BOOK_TYPES_ENDPOINT = "products-v1/products/{book_id}/types"
+
 # URL to get url file to download, params are book id and format of the file (can be pdf, epub, etc..), method GET
 URL_BOOK_ENDPOINT = "products-v1/products/{book_id}/files/{format}"

@@ -4,35 +4,40 @@
 from __future__ import print_function
 import os
 import sys
+import math
 import getopt
 import requests
-from config import BASE_URL, PRODUCTS_ENDPOINT, URL_BOOK_ENDPOINT
+from tqdm import *
+from config import BASE_URL, PRODUCTS_ENDPOINT, URL_BOOK_TYPES_ENDPOINT, URL_BOOK_ENDPOINT
 from user import User
 
+
+#TODO: I should do a function that his only purpose is to request and return data
 
 def get_books(user, offset=0, limit=10):
     """
         Request all your books, return json with info of all your books
-
         Params
         ...
-
         header : str
         offset : int
         limit : int
             how many book wanna get by request
     """
     # TODO: given x time jwt expired and should refresh the header, user.refresh_header()
-    url = BASE_URL+PRODUCTS_ENDPOINT.format(offset=offset, limit=limit)
+    
+    url = BASE_URL + PRODUCTS_ENDPOINT.format(offset=offset, limit=limit)
     r = requests.get(url, headers=user.get_header())
-    data = r.json()['data']
+    data = r.json().get('data', [])
+    
     print("You have {} books".format(str(r.json()['count'])))
+    
     for i in range(r.json()['count'] // limit):
         offset += limit
         url = BASE_URL+PRODUCTS_ENDPOINT.format(offset=offset, limit=limit)
         print(url)
         r = requests.get(url, headers=user.get_header())
-        data += r.json()['data']
+        data += r.json().get('data', [])
     return data
 
 
@@ -40,16 +45,43 @@ def get_url_book(user, book_id, format="pdf"):
     """
         Return url of the book to download
     """
-    # TODO: i should check if exists that format, i think there is an endpoint that return formats
-    # TODO: given x time jwt expired and should refresh the header, user.refresh_header()
-    url = BASE_URL+URL_BOOK_ENDPOINT.format(book_id=book_id, format=format)
+    
+    url = BASE_URL + URL_BOOK_ENDPOINT.format(book_id=book_id, format=format)
     r = requests.get(url, headers=user.get_header())
-    try:
-        return r.json()['data']
-    except Exception as e: # i think this could happend if jwt expired but i should test more 
-        print("Error {}".format(e))
-        r = requests.get(url, headers=user.refresh_header())
-        return r.json()['data']
+
+    if r.status_code == 200: # success
+        return r.json().get('data', "")
+
+    elif r.status_code == 401: # jwt expired 
+        user.refresh_header() # refresh token 
+        get_url_book(user, book_id, format)  # call recursive 
+    
+    print("ERROR (please copy and paste in the issue)")
+    print(r.json())
+    print(r.status_code)
+    return ""
+
+
+def get_book_file_types(user, book_id):
+    """
+        Return a list with file types of a book
+    """
+
+    url = BASE_URL + URL_BOOK_TYPES_ENDPOINT.format(book_id=book_id)
+    r = requests.get(url, headers=user.get_header())
+
+    if  (r.status_code == 200): # success
+        return r.json()['data'][0].get("fileTypes", [])
+    
+    elif (r.status_code == 401): # jwt expired 
+        user.refresh_header() # refresh token 
+        get_book_file_types(user, book_id, format)  # call recursive 
+    
+    print("ERROR (please copy and paste in the issue)")
+    print(r.json())
+    print(r.status_code)
+    return []
+
 
 # TODO: i'd like that this functions be async and download faster
 def download_book(filename, url):
@@ -57,26 +89,19 @@ def download_book(filename, url):
         Download your book
     """
     print("Starting to download " + filename)
-    # thanks to https://sumit-ghosh.com/articles/python-download-progress-bar/
+
     with open(filename, 'wb') as f:
         r = requests.get(url, stream=True)
         total = r.headers.get('content-length')
         if total is None:
             f.write(response.content)
         else:
-            downloaded = 0
             total = int(total)
-            # i don't like how progress bar works so i should search another solution
-            for chunk in r.iter_content(chunk_size=max(int(total/1000), 1024*1024)):
+            # TODO: read more about tqdm
+            for chunk in tqdm(r.iter_content(chunk_size=1024), total=math.ceil(total//1024), unit='KB', unit_scale=True):
                 if chunk:  # filter out keep-alive new chunks
-                    downloaded += len(chunk)
                     f.write(chunk)
                     f.flush()
-                    done = int(50*downloaded/total)
-                    sys.stdout.write('\r[{}{}]'.format(
-                        '█' * done, '.' * (50-done)))
-                    sys.stdout.flush()
-            sys.stdout.write('\n')
             print("Finished " + filename)
 
 
@@ -84,9 +109,9 @@ def main(argv):
     # thanks to https://github.com/ozzieperez/packtpub-library-downloader/blob/master/downloader.py
     email = None
     password = None
-    root_directory = 'media'
-    book_assets = "pdf"  # pdf or mobi or epub or cover or code
-    errorMessage = 'Usage: downloader.py -e <email> -p <password> [-d <directory> -b <book assets>]'
+    root_directory = 'media' 
+    book_file_types = []  # pdf, mobi, epub, code
+    errorMessage = 'Usage: downloader.py -e <email> -p <password> [-d <directory> -b <book file types>]'
 
     # get the command line arguments/options
     try:
@@ -106,12 +131,20 @@ def main(argv):
             root_directory = os.path.expanduser(
                 arg) if '~' in arg else os.path.abspath(arg)
         elif opt in ('-b', '--books'):
-            book_assets = arg
-    
+            book_file_types = arg.split(",")
+
     # do we have the minimum required info?
     if not email or not password:
         print(errorMessage)
         sys.exit(2)
+
+    # check if not exists dir and create
+    if not os.path.exists(root_directory):
+        try:
+            os.makedirs(root_directory)
+        except Exception as e:
+            print(e)
+            sys.exit(2)
 
     # create user with his properly header
     user = User(email, password)
@@ -119,11 +152,15 @@ def main(argv):
     # get all your books
     books = get_books(user)
     for book in books:
-        filename = "{path}/{name}.{fformat}".format(
-            path=root_directory, name=book['productName'].replace(" ", "_"), fformat=book_assets)
-        # get url of the book to download
-        url = get_url_book(user, book['productId'], book_assets)
-        download_book(filename, url)
+        # get the diferent file type of current book
+        file_types = get_book_file_types(user, book['productId'])
+        for file_type in file_types:
+            if file_type in book_file_types:  # check if the file type entered is available by the current book
+                filename = "{path}/{name}.{fformat}".format(
+                    path=root_directory, name=book['productName'].replace(" ", "_"), fformat=file_type)
+                # get url of the book to download
+                url = get_url_book(user, book['productId'], file_type)
+                download_book(filename, url)
 
 
 if __name__ == "__main__":
