@@ -27,18 +27,17 @@ class User:
         """
             Request auth endpoint and return user token  
         """
-        try: 
-            url = BASE_URL+AUTH_ENDPOINT
-            # use json paramenter because for any reason they send user and pass in plain text :'(  
-            r = requests.post(url, json={'username':self.username, 'password':self.password})
+        url = BASE_URL+AUTH_ENDPOINT
+        # use json paramenter because for any reason they send user and pass in plain text :'(  
+        r = requests.post(url, json={'username':self.username, 'password':self.password})
+        if r.status_code == 200:
             print("You are in !")
             return 'Bearer ' + r.json()['data']['access']
-
+    
         # except should happend when user and pass are incorrect 
-        except Exception as e:
-            print("Error login,  check user and password")
-            print("Error {}".format(e))
-            sys.exit(2)
+        print("Error login,  check user and password")
+        print("Error {}".format(e))
+        sys.exit(2)
 
     def get_header(self):
         return self.header
