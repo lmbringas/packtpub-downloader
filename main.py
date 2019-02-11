@@ -104,19 +104,22 @@ def download_book(filename, url):
                     f.flush()
             print("Finished " + filename)
 
+def check_book_exists():
+	pass
 
 def main(argv):
     # thanks to https://github.com/ozzieperez/packtpub-library-downloader/blob/master/downloader.py
     email = None
     password = None
     root_directory = 'media' 
-    book_file_types = []  # pdf, mobi, epub, code
+    book_file_types = ["pdf", "mobi", "epub", "code"]
+    separate = None
     errorMessage = 'Usage: downloader.py -e <email> -p <password> [-d <directory> -b <book file types>]'
 
     # get the command line arguments/options
     try:
         opts, args = getopt.getopt(
-            argv, "e:p:d:b:", ["email=", "pass=", "directory=", "books="])
+            argv, "e:p:d:b:s:", ["email=", "pass=", "directory=", "books=", "separate="])
     except getopt.GetoptError:
         print(errorMessage)
         sys.exit(2)
@@ -132,6 +135,8 @@ def main(argv):
                 arg) if '~' in arg else os.path.abspath(arg)
         elif opt in ('-b', '--books'):
             book_file_types = arg.split(",")
+        elif opt in ('-s', '--separate'):
+        	separate = True
 
     # do we have the minimum required info?
     if not email or not password:
@@ -151,16 +156,27 @@ def main(argv):
 
     # get all your books
     books = get_books(user)
+    print(books)
     for book in books:
-        # get the diferent file type of current book
+        # get the different file type of current book
+        print(f"On {book}")
         file_types = get_book_file_types(user, book['productId'])
         for file_type in file_types:
+	        print(f"On {file_type}")
             if file_type in book_file_types:  # check if the file type entered is available by the current book
-                filename = "{path}/{name}.{fformat}".format(
-                    path=root_directory, name=book['productName'].replace(" ", "_"), fformat=file_type)
+        		book_name = book['productName'].replace(" ", "_")
+        		file_type.replace("code", "zip")
+            	if separate:
+                	filename = f"{root_directory}/{book_name}/{book_name}.{file_type}"
+            	else:
+	                filename = f"{root_directory}/{book_name}.{file_type}"
+                print(filename)
                 # get url of the book to download
                 url = get_url_book(user, book['productId'], file_type)
-                download_book(filename, url)
+                if not os.path.exists(filename):
+                	download_book(filename, url)
+            	else:
+            		print(f"{filename} already exists, skipping.")
 
 
 if __name__ == "__main__":
