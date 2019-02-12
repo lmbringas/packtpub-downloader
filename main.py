@@ -150,6 +150,7 @@ def main(argv):
     book_file_types = ['pdf', 'mobi', 'epub', 'code']
     separate = None
     verbose = None
+    quiet = None
     errorMessage = 'Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -s -v -q]'
 
     # get the command line arguments/options
@@ -197,7 +198,7 @@ def main(argv):
     books = get_books(user, is_verbose=verbose, is_quiet=quiet)
     print('Downloading books...')
     if not quiet:
-        books_iter = tqdm(books, unit='Books')
+        books_iter = tqdm(books, unit='Book')
     else:
         books_iter = books
     for book in books_iter:
