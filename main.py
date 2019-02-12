@@ -198,7 +198,7 @@ def main(argv):
     books = get_books(user, is_verbose=verbose, is_quiet=quiet)
     print('Downloading books...')
     if not quiet:
-        books_iter = tqdm(books, unit='Books')
+        books_iter = tqdm(books, unit='Book')
     else:
         books_iter = books
     for book in books_iter:
