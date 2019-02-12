@@ -31,7 +31,7 @@ class User:
         # use json paramenter because for any reason they send user and pass in plain text :'(  
         r = requests.post(url, json={'username':self.username, 'password':self.password})
         if r.status_code == 200:
-            print("You are in !")
+            print("You are in!")
             return 'Bearer ' + r.json()['data']['access']
     
         # except should happend when user and pass are incorrect 
