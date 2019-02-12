@@ -1,12 +1,12 @@
 # PacktPub Downloader
 
-Script to download all your PacktPub inspired by https://github.com/ozzieperez/packtpub-library-downloader
+Script to download all your PacktPub books inspired by https://github.com/ozzieperez/packtpub-library-downloader
 
-Since PacktPub restructure his website [packtpub-library-downloader](https://github.com/ozzieperez/packtpub-library-downloader) became obsolete because use webscraping. So i figure out that now PacktPub  use now API REST. Then i found which endpoint use to download books and made simple script. Feel free to fork and PR to inprove. Packtpub API's isn't documented :'(
+Since PacktPub restructured their website [packtpub-library-downloader](https://github.com/ozzieperez/packtpub-library-downloader) became obsolete because the downloader used webscraping. So I figured out that now PacktPub uses a REST API. Then I found which endpoint to use for downloading books and made a simple script. Feel free to fork and PR to improve. Packtpub's API isn't documented :'(
 
 ## Usage:
     pip install -r requirements.txt
-	python main.py -e <email> -p <password> [-d <directory> -b <book file types>]
+	python main.py -e <email> -p <password> [-d <directory> -b <book file types> -s -v -q]
 
 ##### Example: Download books in PDF format
 	python main.py -e hello@world.com -p p@ssw0rd -d ~/Desktop/packt -b pdf,epub,mobi,code
@@ -16,12 +16,15 @@ Since PacktPub restructure his website [packtpub-library-downloader](https://git
 - *-p*, *--password* = Your login password
 - *-d*, *--directory* = Directory to download into. Default is "media/" in the current directory
 - *-b*, *--books* = Assets to download. Options are: *pdf,mobi,epub,code*
+- *-s*, *--separate* = Create a separate directory for each book
+- *-v*, *--verbose* = Show more detailed information
+- *-q*, *--quiet* = Don't show information or progress bars
 
 **Book File Types**
 
 - *pdf*: PDF format
 - *mobi*: MOBI format
 - *epub*: EPUB format
-- *code*: Accompanying source code
+- *code*: Accompanying source code, saved as .zip files
 
 I'm working on Python 3.6.0 
