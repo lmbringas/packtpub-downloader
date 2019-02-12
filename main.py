@@ -150,6 +150,7 @@ def main(argv):
     book_file_types = ['pdf', 'mobi', 'epub', 'code']
     separate = None
     verbose = None
+    quiet = None
     errorMessage = 'Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -s -v -q]'
 
     # get the command line arguments/options
