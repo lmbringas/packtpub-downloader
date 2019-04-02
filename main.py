@@ -9,7 +9,7 @@ import math
 import getopt
 import requests
 from tqdm import tqdm, trange
-from config import BASE_URL, PRODUCTS_ENDPOINT, URL_BOOK_TYPES_ENDPOINT, URL_BOOK_ENDPOINT
+from config import BASE_URL, BASE_STATIC_URL, PRODUCTS_ENDPOINT, PRODUCT_FROM_ID_ENDPOINT, URL_BOOK_TYPES_ENDPOINT, URL_BOOK_ENDPOINT
 from user import User
 
 
@@ -18,11 +18,23 @@ def book_request(user, offset=0, limit=10, verbose=False):
     data = []
     url = BASE_URL + PRODUCTS_ENDPOINT.format(offset=offset, limit=limit)
     if verbose:
-        print(url)
+        tqdm.write(url)
     r = requests.get(url, headers=user.get_header())
     data += r.json().get('data', [])
 
     return url, r, data
+
+def book_from_id_request(id, verbose=False):
+    url = BASE_STATIC_URL + PRODUCT_FROM_ID_ENDPOINT.format(id = id)
+    if verbose:
+        tqdm.write(url)
+
+    r = requests.get(url)
+    rjson = r.json()
+    data = {'productId': id, 'productName': rjson.get('title')}
+    
+    return url, r, data
+
 
 def get_books(user, offset=0, limit=10, is_verbose=False, is_quiet=False):
     '''
@@ -50,6 +62,27 @@ def get_books(user, offset=0, limit=10, is_verbose=False, is_quiet=False):
         data += book_request(user, offset, limit, is_verbose)[2]
     return data
 
+def get_books_from_ids(ids, is_verbose=False, is_quiet=False):
+    '''
+        Get all boooks from id
+        Params
+        ...
+        ids : list
+    '''
+
+    data = []
+
+    print("Getting list of books...")
+    
+    if not is_quiet:
+      id_iter = tqdm(ids, unit="Pages")
+    else:
+      id_iter = ids
+
+    for id in id_iter:
+        data.append(book_from_id_request(id, is_verbose)[2])
+    
+    return data
 
 def get_url_book(user, book_id, format='pdf'):
     '''
@@ -66,9 +99,9 @@ def get_url_book(user, book_id, format='pdf'):
         user.refresh_header() # refresh token 
         get_url_book(user, book_id, format)  # call recursive 
     
-    print('ERROR (please copy and paste in the issue)')
-    print(r.json())
-    print(r.status_code)
+    tqdm.write('ERROR (please copy and paste in the issue)')
+    tqdm.write(r.json())
+    tqdm.write(r.status_code)
     return ''
 
 
@@ -87,9 +120,9 @@ def get_book_file_types(user, book_id):
         user.refresh_header() # refresh token 
         get_book_file_types(user, book_id, format)  # call recursive 
     
-    print('ERROR (please copy and paste in the issue)')
-    print(r.json())
-    print(r.status_code)
+    tqdm.write('ERROR (please copy and paste in the issue)')
+    tqdm.write(r.json())
+    tqdm.write(r.status_code)
     return []
 
 
@@ -98,7 +131,7 @@ def download_book(filename, url):
     '''
         Download your book
     '''
-    print('Starting to download ' + filename)
+    tqdm.write('Starting to download ' + filename)
 
     with open(filename, 'wb') as f:
         r = requests.get(url, stream=True)
@@ -112,7 +145,7 @@ def download_book(filename, url):
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
                     f.flush()
-            print('Finished ' + filename)
+            tqdm.write('Finished ' + filename)
 
 
 def make_zip(filename):
@@ -129,8 +162,8 @@ def move_current_files(root, book):
         except OSError:
             os.rename(f, f'{sub_dir}/{book}' + '_1' + f[f.index('.'):])
         except ValueError as e:
-            print(e)
-            print('Skipping')
+            tqdm.write(e)
+            tqdm.write('Skipping')
 
 
 def does_dir_exist(directory):
@@ -151,12 +184,13 @@ def main(argv):
     separate = None
     verbose = None
     quiet = None
-    errorMessage = 'Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -s -v -q]'
+    download_ids = None
+    errorMessage = 'Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -i <products id> -s -v -q]'
 
     # get the command line arguments/options
     try:
         opts, args = getopt.getopt(
-            argv, 'e:p:d:b:svq', ['email=', 'pass=', 'directory=', 'books=', 'separate', 'verbose', 'quiet'])
+            argv, 'e:p:d:b:i:svq', ['email=', 'pass=', 'directory=', 'books=', 'ids=', 'separate', 'verbose', 'quiet'])
     except getopt.GetoptError:
         print(errorMessage)
         sys.exit(2)
@@ -178,6 +212,9 @@ def main(argv):
             verbose = True
         elif opt in ('-q', '--quiet'):
             quiet = True
+        elif opt in ('-i', '--ids'):
+            download_ids = arg.split(',')
+
 
     if verbose and quiet:
         print("Verbose and quiet cannot be used together.")
@@ -195,8 +232,11 @@ def main(argv):
     user = User(email, password)
 
     # get all your books
-    books = get_books(user, is_verbose=verbose, is_quiet=quiet)
-    print('Downloading books...')
+    if (download_ids):
+        books = get_books_from_ids(download_ids, is_verbose=verbose, is_quiet=quiet)
+    else:
+        books = get_books(user, is_verbose=verbose, is_quiet=quiet)
+    tqdm.write('Downloading books...')
     if not quiet:
         books_iter = tqdm(books, unit='Book')
     else:
