@@ -36,6 +36,7 @@ After the execution, you can see the content in the `book` directory.
 - *-s*, *--separate* = Create a separate directory for each book
 - *-v*, *--verbose* = Show more detailed information
 - *-q*, *--quiet* = Don't show information or progress bars
+- *-i*, *--ids* = Products to download by id (If it is not specified, it will download all products that you have purchased) 
 
 **Book File Types**
 
