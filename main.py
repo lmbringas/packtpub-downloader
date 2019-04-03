@@ -145,16 +145,18 @@ def download_file(filename, url):
             f.write(response.content)
         else:
             total = int(total)
-            # TODO: read more about tqdm
-            for chunk in tqdm(
-                r.iter_content(chunk_size=1024),
-                total=math.ceil(total//1024),
+            progress = tqdm(
+                total=math.ceil(total),
                 unit='KB',
-                unit_scale=True
-            ):
+                unit_scale=True,
+                mininterval=1
+            )
+            for chunk in r.iter_content(chunk_size=1024):
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
                     f.flush()
+                    progress.update(1024)
+            progress.close()
             tqdm.write('Finished ' + filename)
 
 
