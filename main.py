@@ -206,7 +206,7 @@ def main(argv):
         file_types = get_book_file_types(user, book['productId'])
         for file_type in file_types:
             if file_type in book_file_types:  # check if the file type entered is available by the current book
-                book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_')
+                book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_').replace('/','')
                 if separate:
                     filename = f'{root_directory}/{book_name}/{book_name}.{file_type}'
                     move_current_files(root_directory, book_name)
