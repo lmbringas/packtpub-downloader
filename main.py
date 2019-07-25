@@ -24,7 +24,7 @@ def book_request(user, offset=0, limit=10, verbose=False):
     return url, r, data
 
 
-def get_books(user, offset=0, limit=10, is_verbose=False, is_quiet=False):
+def get_books(user, offset=0, limit=25, is_verbose=False, is_quiet=False):
     '''
         Request all your books, return json with info of all your books
         Params
@@ -144,6 +144,31 @@ def does_dir_exist(directory):
             sys.exit(2)
 
 
+def enumerate_book_file_types(books_iter, book_file_types, root_directory, separate, user):
+    filenames = []
+    urls = []
+    for book in books_iter:
+        # get the different file type of current book
+        file_types = get_book_file_types(user, book['productId'])
+        first_file_ext = True
+        for file_type in file_types:
+            if file_type in book_file_types:  # check if the file type entered is available by the current book
+                book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_').replace('/', '')
+                if separate:
+                    file_name = f'{root_directory}/{book_name}/{book_name}.{file_type}'
+                    if os.path.exists(file_name) or os.path.exists(file_name.replace('.code', '.zip')):
+                        continue
+                    filenames.append(file_name)
+                    move_current_files(root_directory, book_name, first_file_ext)
+                    first_file_ext = False
+                else:
+                    file_name = f'{root_directory}/{book_name}.{file_type}'
+                    filenames.append(file_name)
+                # get url of the book to download
+                urls.append(get_url_book(user, book['productId'], file_type))
+    return filenames, urls
+
+
 def main(argv):
     # thanks to https://github.com/ozzieperez/packtpub-library-downloader/blob/master/downloader.py
     email = None
@@ -201,31 +226,11 @@ def main(argv):
     # get all your books
     books = get_books(user, is_verbose=verbose, is_quiet=quiet)
     print('\nChecking books...')
-    filenames = []
-    urls = []
     if not quiet:
         books_iter = tqdm(books, unit='Book')
     else:
         books_iter = books
-    for book in books_iter:
-        # get the different file type of current book
-        file_types = get_book_file_types(user, book['productId'])
-        first_file_ext = True
-        for file_type in file_types:
-            if file_type in book_file_types:  # check if the file type entered is available by the current book
-                book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_').replace('/','')
-                if separate:
-                    file_name = f'{root_directory}/{book_name}/{book_name}.{file_type}'
-                    if os.path.exists(file_name) or os.path.exists(file_name.replace('.code', '.zip')):
-                        continue
-                    filenames.append(file_name)
-                    move_current_files(root_directory, book_name, first_file_ext)
-                    first_file_ext = False
-                else:
-                    file_name = f'{root_directory}/{book_name}.{file_type}'
-                    filenames.append(file_name)
-                # get url of the book to download
-                urls.append(get_url_book(user, book['productId'], file_type))
+    filenames, urls = enumerate_book_file_types(books_iter, book_file_types, root_directory, separate, user)
     if len(filenames):
         if not quiet:
             print('Downloading files...')
@@ -239,6 +244,8 @@ def main(argv):
             # Sequential download
             for name, url in names_and_urls:
                 download_book(name, url)
+        if not quiet:
+            print('\nDone!')
     else:
         if not quiet:
             print('\nAll books are already downloaded!')
