@@ -102,3 +102,12 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# VSCode
+.vscode
+
+# SonarLint
+.sonarlint
+
+# Downloaded Media
+media/

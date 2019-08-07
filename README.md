@@ -6,10 +6,10 @@ Since PacktPub restructured their website [packtpub-library-downloader](https://
 
 ## Usage:
     pip install -r requirements.txt
-	python main.py -e <email> -p <password> [-d <directory> -b <book file types> -l -s -v -q]
+	python main.py -e <email> -p <password> [-d <directory> -b <book file types> -i <book ids> -l -s -v -q]
 
 ##### Example: Download books in PDF format
-	python main.py -e hello@world.com -p p@ssw0rd -d ~/Desktop/packt -b pdf,epub,mobi,code
+	python main.py -e hello@world.com -p p@ssw0rd -d ~/Desktop/packt -b pdf
 
 ## Commandline Options
 - *-e*, *--email* = Your login email
@@ -20,6 +20,7 @@ Since PacktPub restructured their website [packtpub-library-downloader](https://
 - *-s*, *--separate* = Create a separate directory for each book
 - *-v*, *--verbose* = Show more detailed information
 - *-q*, *--quiet* = Don't show information or progress bars
+- *-i*, *--ids* = Products to download by id, separated by commas (If not specified, all owned products will be downloaded)
 
     Please note that *-v* and *-q* override each other; the last argument passed to the script will be used. 
 
