@@ -56,10 +56,9 @@ def get_books(user, offset=0, limit=25, is_verbose=False, is_quiet=False):
 
     url, r, data = book_request(user, offset, limit)
 
-    print(f'You have {str(r.json()["count"])} books')
-    tqdm.write("Getting list of books...")
-
     if not is_quiet:
+        print(f'You have {str(r.json()["count"])} books')
+        tqdm.write("Getting list of books...")
         pages_list = trange(r.json()['count'] // limit, unit='Pages')
     else:
         pages_list = range(r.json()['count'] // limit)
@@ -79,9 +78,8 @@ def get_books_from_ids(ids, is_verbose=False, is_quiet=False):
 
     data = []
 
-    print("Getting list of books...")
-
     if not is_quiet:
+        print("Getting list of books...")
         id_iter = tqdm(ids, unit="Pages")
     else:
         id_iter = ids
@@ -359,7 +357,7 @@ def main(argv):
     does_dir_exist(root_directory)
 
     # create user with his properly header
-    user = User(email, password)
+    user = User(email, password, quiet)
 
     # get all your books
     if (download_ids):
