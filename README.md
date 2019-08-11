@@ -16,11 +16,12 @@ Since PacktPub restructured their website [packtpub-library-downloader](https://
 - *-p*, *--password* = Your login password
 - *-d*, *--directory* = Directory to download into. Default is "media/" in the current directory
 - *-b*, *--books* = Assets to download. Options are: *pdf,mobi,epub,code*
+- *-i*, *--ids* = Products to download by id, separated by commas (If not specified, all owned products will be downloaded)
+- *-n*, *--number* = The number of most recently obtained books to check (This will be ignored when using *-i*)
 - *-l*, *--parallel* = Download the books in parallel (implies *-q*)
 - *-s*, *--separate* = Create a separate directory for each book
 - *-v*, *--verbose* = Show more detailed information
 - *-q*, *--quiet* = Don't show information or progress bars
-- *-i*, *--ids* = Products to download by id, separated by commas (If not specified, all owned products will be downloaded)
 
     Please note that *-v* and *-q* override each other; the last argument passed to the script will be used. 
 

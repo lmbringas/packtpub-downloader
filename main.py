@@ -14,7 +14,7 @@ from config import BASE_URL, BASE_STATIC_URL, PRODUCTS_ENDPOINT, PRODUCT_FROM_ID
 from user import User
 from multiprocessing import Pool
 
-error_message = 'Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -i <product ids> -l -s ' \
+error_message = 'Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -i <product ids> -n <number of items to download> -l -s ' \
                 '-v -q] '
 
 
@@ -42,29 +42,42 @@ def book_from_id_request(book_id, verbose=False):
     return url, r, data
 
 
-def get_books(user, offset=0, limit=25, is_verbose=False, is_quiet=False):
+def get_books(user, offset=0, page_limit=25, total_limit=0, is_verbose=False, is_quiet=False):
     """
         Request all your books, return json with info of all your books
         Params
         ...
         header : str
         offset : int
-        limit : int
-            how many book wanna get by request
+        page_limit : int
+            How many books to retrieve with each request
+        total_limit : int
+            The total number of books to retrieve
     """
     # TODO: given x time jwt expired and should refresh the header, user.refresh_header()
+    data = []
 
-    url, r, data = book_request(user, offset, limit)
+    if total_limit:
+        number_of_pages = total_limit // page_limit 
+    else:    
+        number_of_pages = r.json()['count'] // page_limit
+
+    if number_of_pages % page_limit != 0 or number_of_pages == 0:
+        number_of_pages += 1
+
+    _, r, _ = book_request(user, 0, 1, is_verbose)
 
     if not is_quiet:
         print(f'You have {str(r.json()["count"])} books')
         tqdm.write("Getting list of books...")
-        pages_list = trange(r.json()['count'] // limit, unit='Pages')
+        pages_list = trange(number_of_pages, unit='Pages')
     else:
-        pages_list = range(r.json()['count'] // limit)
+        pages_list = range(number_of_pages)
     for _ in pages_list:
-        offset += limit
-        data += book_request(user, offset, limit, is_verbose)[2]
+        if offset + page_limit > total_limit:
+            page_limit = total_limit - offset
+        data += book_request(user, offset, page_limit, is_verbose)[2]
+        offset += page_limit
     return data
 
 
@@ -267,13 +280,14 @@ def get_opts_args(argv):
     try:
         return getopt.getopt(
             argv,
-            'e:p:d:b:i:lsvq',
+            'e:p:d:b:i:n:lsvq',
             [
                 'email=',
                 'pass=',
                 'directory=',
                 'books=',
                 'ids=',
+                'numbers=',
                 'parallel',
                 'separate',
                 'verbose',
@@ -288,6 +302,7 @@ def get_opts_args(argv):
 def check_arg(email, password):
     # do we have the minimum required info?
     if not email or not password:
+        print('email or pwd error')
         print(error_message)
         sys.exit(2)
 
@@ -297,6 +312,7 @@ def parse_args(argv):
     password = None
     root_directory = 'media'
     book_file_types = ['pdf', 'mobi', 'epub', 'code']
+    newest_number = None
     parallel = None
     separate = None
     verbose = None
@@ -317,6 +333,12 @@ def parse_args(argv):
                 arg) if '~' in arg else os.path.abspath(arg)
         elif opt in ('-b', '--books'):
             book_file_types = arg.split(',')
+        elif opt in ('-n', '--number'):
+            try:
+                newest_number = int(arg)
+            except:
+                print(error_message)
+                sys.exit(2)
         elif opt in ('-l', '--parallel'):
             parallel = True
             quiet = True
@@ -337,6 +359,7 @@ def parse_args(argv):
         password, \
         root_directory, \
         book_file_types, \
+        newest_number, \
         parallel, \
         separate, verbose, \
         quiet, \
@@ -349,6 +372,7 @@ def main(argv):
         password, \
         root_directory, \
         book_file_types, \
+        newest_number, \
         parallel, \
         separate, \
         verbose, \
@@ -366,7 +390,7 @@ def main(argv):
         books = get_books_from_ids(
             download_ids, is_verbose=verbose, is_quiet=quiet)
     else:
-        books = get_books(user, is_verbose=verbose, is_quiet=quiet)
+        books = get_books(user, total_limit=newest_number, is_verbose=verbose, is_quiet=quiet)
 
     # downloading all books
     download_all_books(user, books, book_file_types, parallel,
