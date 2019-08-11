@@ -146,20 +146,22 @@ def download_file(filename, url, quiet):
         if total is None:
             f.write(r.content)
         else:
-            total = int(total)
-            progress = tqdm(
-                total=math.ceil(total),
-                unit='KB',
-                unit_scale=True,
-                mininterval=1
-            )
+            if not quiet:
+                total = int(total)
+                progress = tqdm(
+                    total=math.ceil(total),
+                    unit='KB',
+                    unit_scale=True,
+                    mininterval=1
+                )
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
                     f.flush()
-                    progress.update(1024)
-            progress.close()
+                    if not quiet:
+                        progress.update(1024)
             if not quiet:
+                progress.close()
                 tqdm.write('Finished ' + filename)
 
 
