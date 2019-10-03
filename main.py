@@ -57,7 +57,7 @@ def get_books(user, offset=0, page_limit=25, total_limit=0, is_verbose=False, is
     # TODO: given x time jwt expired and should refresh the header, user.refresh_header()
     data = []
 
-    _, r, _ = book_request(user, 0, 1, is_verbose)
+    _, r, _ = book_request(user, offset, page_limit, is_verbose)
 
     if total_limit:
         number_of_pages = total_limit // page_limit 
@@ -74,7 +74,7 @@ def get_books(user, offset=0, page_limit=25, total_limit=0, is_verbose=False, is
     else:
         pages_list = range(number_of_pages)
     for _ in pages_list:
-        if offset + page_limit > total_limit:
+        if offset + page_limit > total_limit and total_limit:
             page_limit = total_limit - offset
         data += book_request(user, offset, page_limit, is_verbose)[2]
         offset += page_limit
@@ -312,7 +312,7 @@ def parse_args(argv):
     password = None
     root_directory = 'media'
     book_file_types = ['pdf', 'mobi', 'epub', 'code']
-    newest_number = None
+    newest_number = 0
     parallel = None
     separate = None
     verbose = None
