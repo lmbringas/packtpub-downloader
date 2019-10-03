@@ -57,6 +57,8 @@ def get_books(user, offset=0, page_limit=25, total_limit=0, is_verbose=False, is
     # TODO: given x time jwt expired and should refresh the header, user.refresh_header()
     data = []
 
+    _, r, _ = book_request(user, 0, 1, is_verbose)
+
     if total_limit:
         number_of_pages = total_limit // page_limit 
     else:    
@@ -64,8 +66,6 @@ def get_books(user, offset=0, page_limit=25, total_limit=0, is_verbose=False, is
 
     if number_of_pages % page_limit != 0 or number_of_pages == 0:
         number_of_pages += 1
-
-    _, r, _ = book_request(user, 0, 1, is_verbose)
 
     if not is_quiet:
         print(f'You have {str(r.json()["count"])} books')
@@ -119,8 +119,8 @@ def get_url_book(user, book_id, fformat='pdf'):
         get_url_book(user, book_id, fformat)  # call recursive
 
     tqdm.write('ERROR (please copy and paste in the issue)')
-    tqdm.write(r.json())
-    tqdm.write(r.status_code)
+    tqdm.write(str(r.json()))
+    tqdm.write(str(r.status_code))
     return ''
 
 
