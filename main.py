@@ -31,8 +31,6 @@ error_message = (
 def book_request(user, offset=0, limit=10, verbose=False):
     data = []
     url = BASE_URL + PRODUCTS_ENDPOINT.format(offset=offset, limit=limit)
-    if verbose:
-        tqdm.write(url)
     r = requests.get(url, headers=user.get_header())
     data += r.json().get("data", [])
 
@@ -83,8 +81,8 @@ def get_books(
                 number_of_pages += 1
 
             if not is_quiet:
-                print(f'You have {str(r.json()["count"])} books')
-                tqdm.write("Getting list of books...")
+                print(f'You have {str(r.json()["count"])} items')
+                print("Getting list of books...")
                 pages_list = trange(number_of_pages, unit="Pages")
             else:
                 pages_list = range(number_of_pages)
@@ -238,9 +236,7 @@ def set_book_type(book, file_type, separate, root_directory, first=True):
     book_name, book_filename = get_book_name(book, file_type)
     if separate:
         filename = f"{root_directory}/{book_name}/{book_filename}"
-        if os.path.exists(filename) or os.path.exists(
-            filename.replace(".code", ".zip")
-        ):
+        if os.path.exists(filename) or os.path.exists( filename.replace(".code", ".zip") ):
             name_append = False
         elif first:
             move_current_files(root_directory, book_name)
@@ -253,7 +249,7 @@ def download_all_books(
     user, books, book_file_types, parallel, separate, root_directory, quiet=False
 ):
     if not quiet:
-        print("\nChecking books...")
+        tqdm.write("\nChecking books...")
         books_iter = tqdm(books, unit="Book")
     else:
         books_iter = books
@@ -263,7 +259,7 @@ def download_all_books(
     if len(filenames):
         quiet_list = [quiet] * len(urls)
         if not quiet:
-            print("Downloading files...")
+            tqdm.write("Downloading files...")
         names_and_urls = zip(filenames, urls, quiet_list)
         if parallel:
             # Asynchronously download books 10 at a time
