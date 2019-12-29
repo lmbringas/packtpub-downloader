@@ -64,7 +64,7 @@ def get_url_book(user, book_id, format='pdf'):
 
     elif r.status_code == 401: # jwt expired 
         user.refresh_header() # refresh token 
-        get_url_book(user, book_id, format)  # call recursive 
+        return get_url_book(user, book_id, format)  # call recursive 
     
     print('ERROR (please copy and paste in the issue)')
     print(r.json())
@@ -85,7 +85,7 @@ def get_book_file_types(user, book_id):
     
     elif (r.status_code == 401): # jwt expired 
         user.refresh_header() # refresh token 
-        get_book_file_types(user, book_id, format)  # call recursive 
+        return get_book_file_types(user, book_id, format)  # call recursive 
     
     print('ERROR (please copy and paste in the issue)')
     print(r.json())
@@ -144,29 +144,29 @@ def does_dir_exist(directory):
 
 def main(argv):
     # thanks to https://github.com/ozzieperez/packtpub-library-downloader/blob/master/downloader.py
-    email = None
-    password = None
+    bearer_token = None
+    refresh_token = None
     root_directory = 'media' 
     book_file_types = ['pdf', 'mobi', 'epub', 'code']
     separate = None
     verbose = None
     quiet = None
-    errorMessage = 'Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -s -v -q]'
+    errorMessage = 'Usage: main.py -t <bearer token> -r <refresh token> [-d <directory> -b <book file types> -s -v -q]'
 
     # get the command line arguments/options
     try:
         opts, args = getopt.getopt(
-            argv, 'e:p:d:b:svq', ['email=', 'pass=', 'directory=', 'books=', 'separate', 'verbose', 'quiet'])
+            argv, 't:r:d:b:svq', ['bearer_token=', 'refresh_token=', 'directory=', 'books=', 'separate', 'verbose', 'quiet'])
     except getopt.GetoptError:
         print(errorMessage)
         sys.exit(2)
 
     # hold the values of the command line options
     for opt, arg in opts:
-        if opt in ('-e', '--email'):
-            email = arg
-        elif opt in ('-p', '--pass'):
-            password = arg
+        if opt in ('-t', '--bearer'):
+            bearer_token = arg
+        elif opt in ('-r', '--refresh'):
+            refresh_token = arg
         elif opt in ('-d', '--directory'):
             root_directory = os.path.expanduser(
                 arg) if '~' in arg else os.path.abspath(arg)
@@ -184,7 +184,7 @@ def main(argv):
         sys.exit(2)
 
     # do we have the minimum required info?
-    if not email or not password:
+    if not bearer_token or not refresh_token:
         print(errorMessage)
         sys.exit(2)
 
@@ -192,7 +192,7 @@ def main(argv):
     does_dir_exist(root_directory)
 
     # create user with his properly header
-    user = User(email, password)
+    user = User(bearer_token, refresh_token)
 
     # get all your books
     books = get_books(user, is_verbose=verbose, is_quiet=quiet)

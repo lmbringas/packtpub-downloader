@@ -9,8 +9,8 @@
 # this is base url where i do the requests
 BASE_URL = "https://services.packtpub.com/"
 
-# URL to request jwt token, params by post are user and pass, return jwt token
-AUTH_ENDPOINT = "auth-v1/users/tokens"
+# URL to refresh jwt token
+REFRESH_ENDPOINT = "auth-v1/users/me/tokens"
 
 # URL to get all your books, two params that i change are offset and limit, method GET
 PRODUCTS_ENDPOINT = "entitlements-v1/users/me/products?sort=createdAt:DESC&offset={offset}&limit={limit}"
