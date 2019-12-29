@@ -21,7 +21,6 @@ class User:
     def __init__(self, bearer_token, refresh_token):
         self.bearer_token = bearer_token
         self.refresh_token = refresh_token
-        self.header["Authorization"] = bearer_token
         self.refresh_header()
 
     def refresh_jwt(self):
