@@ -38,7 +38,7 @@ class User:
     
         # except should happend when user and pass are incorrect 
         print("Error login,  check user and password")
-        print("Error {}".format(e))
+        print("Error {}".format(r.status_code))
         sys.exit(2)
 
     def get_header(self):
