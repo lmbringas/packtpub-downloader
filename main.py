@@ -140,8 +140,8 @@ def get_book_file_types(user, book_id):
         get_book_file_types(user, book_id)  # call recursive
 
     tqdm.write('ERROR (please copy and paste in the issue)')
-    tqdm.write(r.json())
-    tqdm.write(r.status_code)
+    tqdm.write(str(r.json()))
+    tqdm.write(str(r.status_code))
     return []
 
 
