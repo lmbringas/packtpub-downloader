@@ -179,9 +179,11 @@ def download_file(filename, url, quiet):
 
 
 def get_book_name(book, file_type):
-    book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_').replace('/', '')
-    if file_type == 'video' or file_type == 'code':
+    book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_').replace('/', '').replace('\'','')
+    if file_type == 'video':
         return book_name, book_name + '.' + 'zip'
+    elif file_type == 'code':
+        return book_name, book_name + '_code.' + 'zip'
     else:
         return book_name, book_name + '.' + file_type
 
@@ -311,7 +313,7 @@ def parse_args(argv):
     email = None
     password = None
     root_directory = 'media'
-    book_file_types = ['pdf', 'mobi', 'epub', 'code']
+    book_file_types = ['pdf', 'mobi', 'epub', 'code', 'video']
     newest_number = 0
     parallel = None
     separate = None
