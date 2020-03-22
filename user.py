@@ -24,7 +24,7 @@ class User:
         self.quiet = quiet
         self.header["Authorization"] = self.get_token(self.quiet)
     
-    def get_token(self, quiet):
+    def get_token(self, quiet=False):
         """
             Request auth endpoint and return user token  
         """
