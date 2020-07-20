@@ -152,6 +152,10 @@ def get_book_info(user, book_id, fformat="pdf", retrieve_types=False, tries=0):
             returned_data = r.json().get("data", "")
         return returned_data
 
+    elif r.status_code == 404:
+        tqdm.write(f"Product {book_id} not found, skipping...")
+        return ""
+
     elif tries <= 5:
         if r.status_code == 401:  # jwt expired
             user.refresh_header()  # refresh token

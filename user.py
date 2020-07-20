@@ -38,7 +38,7 @@ class User:
     
         # except should happend when user and pass are incorrect 
         print("Error login,  check user and password")
-        print("Error {}".format(e))
+        print(f"Error {r.status_code}")
         sys.exit(2)
 
     def get_header(self):
@@ -48,7 +48,7 @@ class User:
         """
             Refresh jwt because it expired and returned
         """
-        self.header["Authorization"] = self.get_token()
+        self.header["Authorization"] = self.get_token(self.quiet)
 
         return self.header
 
