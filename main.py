@@ -102,7 +102,7 @@ def get_books(
 
 def get_books_from_ids(ids, is_verbose=False, is_quiet=False):
     """
-    Get all boooks from id
+    Get all books from id
     Params
     ...
     ids : list
