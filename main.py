@@ -184,7 +184,11 @@ def download_file(filename, url, quiet):
         r = requests.get(url, stream=True)
         total = r.headers.get("content-length")
         if total is None:
-            f.write(r.content)
+            tqdm.write(f"{filename} could not be downloaded, retrying...")
+            r = requests.get(url, stream=True)
+            total = r.headers.get("content-length")
+            if total is None:
+                tqdm.write(f"{filename} failed to download, skipping...")
         else:
             if not quiet:
                 total = int(total)
