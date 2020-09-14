@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-'''
+"""
     This file contain all url endpoint 
-'''
+"""
 
-# instead of variables should i change variables to a one big json of urls ? 
+# instead of variables should i change variables to a one big json of urls ?
 
 # this is base url where i do the requests
 BASE_URL = "https://services.packtpub.com/"

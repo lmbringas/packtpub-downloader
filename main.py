@@ -21,10 +21,7 @@ from config import (
 from user import User
 from multiprocessing import Pool
 
-error_message = (
-    "Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -i <product ids> -n <number of items to download> -l -s "
-    "-v -q] "
-)
+error_message = "Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -i <product ids> -n <number of items to download> -l -s -v -q] "
 
 
 # TODO: I should do a function that his only purpose is to request and return data
@@ -53,15 +50,15 @@ def get_books(
     user, offset=0, page_limit=25, total_limit=0, is_verbose=False, is_quiet=False
 ):
     """
-        Request all your books, return json with info of all your books
-        Params
-        ...
-        header : str
-        offset : int
-        page_limit : int
-            How many books to retrieve with each request
-        total_limit : int
-            The total number of books to retrieve
+    Request all your books, return json with info of all your books
+    Params
+    ...
+    header : str
+    offset : int
+    page_limit : int
+        How many books to retrieve with each request
+    total_limit : int
+        The total number of books to retrieve
     """
     # TODO: given x time jwt expired and should refresh the header, user.refresh_header()
     data = []
@@ -105,10 +102,10 @@ def get_books(
 
 def get_books_from_ids(ids, is_verbose=False, is_quiet=False):
     """
-        Get all boooks from id
-        Params
-        ...
-        ids : list
+    Get all boooks from id
+    Params
+    ...
+    ids : list
     """
 
     data = []
@@ -135,7 +132,7 @@ def response_error(response, *args):
 
 def get_book_info(user, book_id, fformat="pdf", retrieve_types=False, tries=0):
     """
-        Return url of the book or list with file types of a book
+    Return url of the book or list with file types of a book
     """
 
     if retrieve_types:
@@ -175,7 +172,7 @@ def get_book_info(user, book_id, fformat="pdf", retrieve_types=False, tries=0):
 # TODO: i'd like that this functions be async and download faster
 def download_file(filename, url, quiet):
     """
-        Download file
+    Download file
     """
     if not quiet:
         tqdm.write("Starting to download " + filename)
@@ -244,7 +241,9 @@ def set_book_type(book, file_type, separate, root_directory, first=True):
     book_name, book_filename = get_book_name(book, file_type)
     if separate:
         filename = f"{root_directory}/{book_name}/{book_filename}"
-        if os.path.exists(filename) or os.path.exists( filename.replace(".code", ".zip") ):
+        if os.path.exists(filename) or os.path.exists(
+            filename.replace(".code", ".zip")
+        ):
             name_append = False
         elif first:
             move_current_files(root_directory, book_name)
@@ -416,9 +415,18 @@ def parse_args(argv):
 
 def main(argv):
     # thanks to https://github.com/ozzieperez/packtpub-library-downloader/blob/master/downloader.py
-    email, password, root_directory, book_file_types, newest_number, parallel, separate, verbose, quiet, download_ids = parse_args(
-        argv
-    )
+    (
+        email,
+        password,
+        root_directory,
+        book_file_types,
+        newest_number,
+        parallel,
+        separate,
+        verbose,
+        quiet,
+        download_ids,
+    ) = parse_args(argv)
 
     # check if not exists dir and create
     does_dir_exist(root_directory)
