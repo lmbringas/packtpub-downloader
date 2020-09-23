@@ -298,8 +298,8 @@ def does_dir_exist(directory):
 def enumerate_book_file_types(
     books_iter, book_file_types, root_directory, separate, user, verbose=False
 ):
-    filenames = set()
-    urls = set()
+    filenames = []
+    urls = []
     for book in books_iter:
         # get the different file types of current book
         file_types = get_book_info(user, book["productId"], retrieve_types=True)
@@ -311,10 +311,10 @@ def enumerate_book_file_types(
                 file_name, append = set_book_type(
                     book, file_type, separate, root_directory, first_file
                 )
-                if append:
-                    filenames.add(file_name)
+                if append and file_name not in filenames:
+                    filenames.append(file_name)
                     # get url of the book to download
-                    urls.add(get_book_info(user, book["productId"], file_type))
+                    urls.append(get_book_info(user, book["productId"], file_type))
                 first_file = False
     return filenames, urls
 
