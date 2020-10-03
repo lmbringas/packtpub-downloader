@@ -1,0 +1,11 @@
+version: '3.3'
+
+services:
+  packtpub-downloader:
+    image: python:3.6.0
+    container_name: "packtpub-downloader"
+    env_file:
+      - data.env
+    volumes: 
+      - "./:/app"
+    command: "/bin/bash /app/entrypoint.sh"
