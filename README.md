@@ -32,7 +32,7 @@ After the execution, you can see the content in the `book` directory.
 - *-e*, *--email* = Your login email
 - *-p*, *--password* = Your login password
 - *-d*, *--directory* = Directory to download into. Default is "media/" in the current directory
-- *-b*, *--books* = Assets to download. Options are: *pdf,mobi,epub,code*
+- *-b*, *--books* = Assets to download. Options are: *pdf,mobi,epub,code,video*
 - *-s*, *--separate* = Create a separate directory for each book
 - *-v*, *--verbose* = Show more detailed information
 - *-q*, *--quiet* = Don't show information or progress bars
@@ -43,5 +43,6 @@ After the execution, you can see the content in the `book` directory.
 - *mobi*: MOBI format
 - *epub*: EPUB format
 - *code*: Accompanying source code, saved as .zip files
+- *video*: Some courses are in video format
 
 I'm working on Python 3.6.0 
