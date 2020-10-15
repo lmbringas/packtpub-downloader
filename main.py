@@ -85,7 +85,7 @@ def get_book_file_types(user, book_id):
     
     elif (r.status_code == 401): # jwt expired 
         user.refresh_header() # refresh token 
-        get_book_file_types(user, book_id, format)  # call recursive 
+        get_book_file_types(user, book_id)  # call recursive 
     
     print('ERROR (please copy and paste in the issue)')
     print(r.json())
@@ -104,7 +104,7 @@ def download_book(filename, url):
         r = requests.get(url, stream=True)
         total = r.headers.get('content-length')
         if total is None:
-            f.write(response.content)
+            f.write(r.content)
         else:
             total = int(total)
             # TODO: read more about tqdm
