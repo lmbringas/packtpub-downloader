@@ -104,10 +104,10 @@ def get_url_book(user, book_id, format='pdf'):
         user.refresh_header()  # refresh token
         get_url_book(user, book_id, format)  # call recursive
 
-    tqdm.write('ERROR (please copy and paste in the issue)')
-    tqdm.write(r.json())
-    tqdm.write(r.status_code)
-    return ''
+    tqdm.write('ERROR (please copy and paste in the issue): ' + str(r.status_code))
+    for key,value in r.json().items():
+        tqdm.write('  ' + key + ': ' + str(value))
+    raise PermissionError('Could not download book: ' + book_id + ' in format: ' + format)
 
 
 def get_book_file_types(user, book_id):
@@ -125,9 +125,9 @@ def get_book_file_types(user, book_id):
         user.refresh_header()  # refresh token
         get_book_file_types(user, book_id, format)  # call recursive
 
-    tqdm.write('ERROR (please copy and paste in the issue)')
-    tqdm.write(r.json())
-    tqdm.write(r.status_code)
+    tqdm.write('ERROR (please copy and paste in the issue): ' + str(r.status_code))
+    for key, value in r.json().items():
+        tqdm.write('  ' + key + ': ' + str(value))
     return []
 
 
@@ -194,16 +194,22 @@ def download_book_by_type(user, book, file_type, separate, root_directory, verbo
         move_current_files(root_directory, book_name)
     else:
         filename = f'{root_directory}/{book_filename}'
+
+    if os.path.exists(filename):
+        if verbose:
+            tqdm.write(f'{filename} already exists, skipping.')
+        return
+
+    try:
         # get url of the book to download
         url = get_url_book(user, book['productId'], file_type)
-        if not os.path.exists(filename):
-            download_file(filename, url)
-        else:
-            if verbose:
-                tqdm.write(f'{filename} already exists, skipping.')
+        download_file(filename, url)
+    except PermissionError as e:
+        tqdm.write(repr(e))
+        tqdm.write('Skipping')
 
 
-def downlaod_all_books(user, books, book_file_types, separate, root_directory, verbose=False, quiet=False):
+def download_all_books(user, books, book_file_types, separate, root_directory, verbose=False, quiet=False):
     tqdm.write('Downloading books...')
     if not quiet:
         books_iter = tqdm(books, unit='Book')
@@ -343,17 +349,21 @@ def main(argv):
                     move_current_files(root_directory, book_name)
                 else:
                     filename = f'{root_directory}/{book_name}.{file_type}'
-                # get url of the book to download
-                url = get_url_book(user, book['productId'], file_type)
-                if not os.path.exists(filename) and not os.path.exists(filename.replace('.code', '.zip')):
-                    download_book(filename, url)
-                    make_zip(filename)
-                else:
+
+                # implied check for pdf, epub, mobi, video
+                if os.path.exists(filename.replace('.code', '.zip')):
                     if verbose:
                         tqdm.write(f'{filename} already exists, skipping.')
+                    continue
 
-    # downloading all books
-    # downlaod_all_books(user, books, book_file_types, separate, root_directory, verbose, quiet)
+                try:
+                    # get url of the book to download
+                    url = get_url_book(user, book['productId'], file_type)
+                    download_file(filename, url)
+                    make_zip(filename)
+                except PermissionError as e:
+                    tqdm.write(repr(e))
+                    tqdm.write('Skipping')
 
 
 if __name__ == '__main__':

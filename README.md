@@ -6,7 +6,7 @@ Since PacktPub restructured their website [packtpub-library-downloader](https://
 
 ## Usage:
     pip install -r requirements.txt
-	python main.py -e <email> -p <password> [-d <directory> -b <book file types> -s -v -q]
+	python main.py -e <email> -p <password> [-d <directory> -b <book file types> -s -v -q] [-i <bookids>]
 
 ##### Example: Download books in PDF format
 	python main.py -e hello@world.com -p p@ssw0rd -d ~/Desktop/packt -b pdf,epub,mobi,code

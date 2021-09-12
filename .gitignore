@@ -82,7 +82,7 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
-.env
+*.env
 .venv
 env/
 venv/
@@ -109,5 +109,9 @@ venv.bak/
 # SonarLint
 .sonarlint
 
+# IntelliJ
+.idea/
+
 # Downloaded Media
 media/
+book/
