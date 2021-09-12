@@ -27,20 +27,20 @@ def book_request(user, offset=0, limit=10, verbose=False):
     return url, r, data
 
 
-def book_from_id_request(id, verbose=False):
-    url = BASE_STATIC_URL + PRODUCT_FROM_ID_ENDPOINT.format(id=id)
+def book_from_id_request(book_id, verbose=False):
+    url = BASE_STATIC_URL + PRODUCT_FROM_ID_ENDPOINT.format(id=book_id)
     if verbose:
         tqdm.write(url)
 
     r = requests.get(url)
     rjson = r.json()
-    data = {'productId': id, 'productName': rjson.get('title')}
+    data = {'productId': book_id, 'productName': rjson.get('title')}
 
     return url, r, data
 
 
 def get_books(user, offset=0, limit=10, is_verbose=False, is_quiet=False):
-    '''
+    """
         Request all your books, return json with info of all your books
         Params
         ...
@@ -48,7 +48,7 @@ def get_books(user, offset=0, limit=10, is_verbose=False, is_quiet=False):
         offset : int
         limit : int
             how many book wanna get by request
-    '''
+    """
     # TODO: given x time jwt expired and should refresh the header, user.refresh_header()
 
     url, r, data = book_request(user, offset, limit)
@@ -67,12 +67,12 @@ def get_books(user, offset=0, limit=10, is_verbose=False, is_quiet=False):
 
 
 def get_books_from_ids(ids, is_verbose=False, is_quiet=False):
-    '''
-        Get all boooks from id
+    """
+        Get all books from id
         Params
         ...
         ids : list
-    '''
+    """
 
     data = []
 
@@ -83,18 +83,18 @@ def get_books_from_ids(ids, is_verbose=False, is_quiet=False):
     else:
         id_iter = ids
 
-    for id in id_iter:
-        data.append(book_from_id_request(id, is_verbose)[2])
+    for book_id in id_iter:
+        data.append(book_from_id_request(book_id, is_verbose)[2])
 
     return data
 
 
-def get_url_book(user, book_id, format='pdf'):
-    '''
+def get_url_book(user, book_id, file_format='pdf'):
+    """
         Return url of the book to download
-    '''
+    """
 
-    url = BASE_URL + URL_BOOK_ENDPOINT.format(book_id=book_id, format=format)
+    url = BASE_URL + URL_BOOK_ENDPOINT.format(book_id=book_id, format=file_format)
     r = requests.get(url, headers=user.get_header())
 
     if r.status_code == 200:  # success
@@ -102,28 +102,28 @@ def get_url_book(user, book_id, format='pdf'):
 
     elif r.status_code == 401:  # jwt expired
         user.refresh_header()  # refresh token
-        get_url_book(user, book_id, format)  # call recursive
+        get_url_book(user, book_id, file_format)  # call recursive
 
     tqdm.write('ERROR (please copy and paste in the issue): ' + str(r.status_code))
     for key,value in r.json().items():
         tqdm.write('  ' + key + ': ' + str(value))
-    raise PermissionError('Could not download book: ' + book_id + ' in format: ' + format)
+    raise PermissionError('Could not download book: ' + book_id + ' in format: ' + file_format)
 
 
 def get_book_file_types(user, book_id):
-    '''
+    """
         Return a list with file types of a book
-    '''
+    """
 
     url = BASE_URL + URL_BOOK_TYPES_ENDPOINT.format(book_id=book_id)
     r = requests.get(url, headers=user.get_header())
 
-    if (r.status_code == 200):  # success
+    if r.status_code == 200:  # success
         return r.json()['data'][0].get('fileTypes', [])
 
-    elif (r.status_code == 401):  # jwt expired
+    elif r.status_code == 401:  # jwt expired
         user.refresh_header()  # refresh token
-        get_book_file_types(user, book_id, format)  # call recursive
+        return get_book_file_types(user, book_id)  # call recursive
 
     tqdm.write('ERROR (please copy and paste in the issue): ' + str(r.status_code))
     for key, value in r.json().items():
@@ -133,9 +133,9 @@ def get_book_file_types(user, book_id):
 
 # TODO: i'd like that this functions be async and download faster
 def download_file(filename, url):
-    '''
+    """
         Download file
-    '''
+    """
     tqdm.write('Starting to download ' + filename)
 
     with open(filename, 'wb') as f:
@@ -161,8 +161,7 @@ def download_file(filename, url):
 
 
 def get_book_name(book, file_type):
-    book_name = book['productName'].replace(
-        ' ', '_').replace('.', '_').replace(':', '_')
+    book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_').replace('/','').replace('?','')
     if file_type == 'video' or file_type == 'code':
         return book_name, book_name + '.' + file_type + '.zip'
     else:
@@ -171,7 +170,9 @@ def get_book_name(book, file_type):
 
 def make_zip(filename):
     if filename[-4:] == 'code':
-        os.replace(filename, filename[:-4] + 'zip')
+        os.replace(filename, filename[:-4] + 'code.zip')
+    elif filename[-5:] == 'video':
+        os.replace(filename, filename[:-5] + 'video.zip')
 
 
 def move_current_files(root, book):
@@ -183,7 +184,7 @@ def move_current_files(root, book):
         except OSError:
             os.rename(f, f'{sub_dir}/{book}' + '_1' + f[f.index('.'):])
         except ValueError as e:
-            tqdm.write(e)
+            tqdm.write(repr(e))
             tqdm.write('Skipping')
 
 
@@ -328,7 +329,7 @@ def main(argv):
     user = User(email, password)
 
     # get all your books
-    if (download_ids):
+    if download_ids:
         books = get_books_from_ids(
             download_ids, is_verbose=verbose, is_quiet=quiet)
     else:
@@ -341,6 +342,7 @@ def main(argv):
     for book in books_iter:
         # get the different file type of current book
         file_types = get_book_file_types(user, book['productId'])
+        tqdm.write('Requested formats: ' + ','.join(book_file_types) + ' but only available: ' + ','.join(file_types))
         for file_type in file_types:
             if file_type in book_file_types:  # check if the file type entered is available by the current book
                 book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_').replace('/','').replace('?','')
@@ -350,8 +352,8 @@ def main(argv):
                 else:
                     filename = f'{root_directory}/{book_name}.{file_type}'
 
-                # implied check for pdf, epub, mobi, video
-                if os.path.exists(filename.replace('.code', '.zip')):
+                # implied check for pdf, epub, mobi, also avoid name collision when both code and video are available.
+                if os.path.exists(filename.replace('.code', '.code.zip').replace('.video', '.video.zip')):
                     if verbose:
                         tqdm.write(f'{filename} already exists, skipping.')
                     continue
