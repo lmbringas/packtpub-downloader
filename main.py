@@ -24,6 +24,7 @@ def book_request(user, offset=0, limit=10, verbose=False):
 
     return url, r, data
 
+
 def get_books(user, offset=0, limit=10, is_verbose=False, is_quiet=False):
     '''
         Request all your books, return json with info of all your books
@@ -35,12 +36,12 @@ def get_books(user, offset=0, limit=10, is_verbose=False, is_quiet=False):
             how many book wanna get by request
     '''
     # TODO: given x time jwt expired and should refresh the header, user.refresh_header()
-    
+
     url, r, data = book_request(user, offset, limit)
-    
+
     print(f'You have {str(r.json()["count"])} books')
     print("Getting list of books...")
-    
+
     if not is_quiet:
         pages_list = trange(r.json()['count'] // limit, unit='Pages')
     else:
@@ -55,17 +56,17 @@ def get_url_book(user, book_id, format='pdf'):
     '''
         Return url of the book to download
     '''
-    
+
     url = BASE_URL + URL_BOOK_ENDPOINT.format(book_id=book_id, format=format)
     r = requests.get(url, headers=user.get_header())
 
-    if r.status_code == 200: # success
+    if r.status_code == 200:  # success
         return r.json().get('data', '')
 
-    elif r.status_code == 401: # jwt expired 
-        user.refresh_header() # refresh token 
-        get_url_book(user, book_id, format)  # call recursive 
-    
+    elif r.status_code == 401:  # jwt expired
+        user.refresh_header()  # refresh token
+        get_url_book(user, book_id, format)  # call recursive
+
     print('ERROR (please copy and paste in the issue)')
     print(r.json())
     print(r.status_code)
@@ -80,13 +81,13 @@ def get_book_file_types(user, book_id):
     url = BASE_URL + URL_BOOK_TYPES_ENDPOINT.format(book_id=book_id)
     r = requests.get(url, headers=user.get_header())
 
-    if  (r.status_code == 200): # success
+    if (r.status_code == 200):  # success
         return r.json()['data'][0].get('fileTypes', [])
-    
-    elif (r.status_code == 401): # jwt expired 
-        user.refresh_header() # refresh token 
-        get_book_file_types(user, book_id, format)  # call recursive 
-    
+
+    elif (r.status_code == 401):  # jwt expired
+        user.refresh_header()  # refresh token
+        get_book_file_types(user, book_id, format)  # call recursive
+
     print('ERROR (please copy and paste in the issue)')
     print(r.json())
     print(r.status_code)
@@ -108,7 +109,10 @@ def download_book(filename, url):
         else:
             total = int(total)
             # TODO: read more about tqdm
-            for chunk in tqdm(r.iter_content(chunk_size=1024), total=math.ceil(total//1024), unit='KB', unit_scale=True):
+            for chunk in tqdm(r.iter_content(chunk_size=1024),
+                              total=math.ceil(total // 1024),
+                              unit='KB',
+                              unit_scale=True):
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
                     f.flush()
@@ -142,11 +146,20 @@ def does_dir_exist(directory):
             sys.exit(2)
 
 
+def create_readme(path, book):
+    filename = os.path.join(path, 'README.md')
+    with open(filename, 'w', encoding='utf-8') as file:
+        file.write('# ' + str(book['productName']) + '\n\n')
+        file.write('productId: ' + str(book['productId']) + '\n')
+        file.write('Release date: ' + str(book['releaseDate']) + '\n')
+    file.close()
+
+
 def main(argv):
     # thanks to https://github.com/ozzieperez/packtpub-library-downloader/blob/master/downloader.py
     email = None
     password = None
-    root_directory = 'media' 
+    root_directory = 'media'
     book_file_types = ['pdf', 'mobi', 'epub', 'code']
     separate = None
     verbose = None
@@ -155,8 +168,10 @@ def main(argv):
 
     # get the command line arguments/options
     try:
-        opts, args = getopt.getopt(
-            argv, 'e:p:d:b:svq', ['email=', 'pass=', 'directory=', 'books=', 'separate', 'verbose', 'quiet'])
+        opts, args = getopt.getopt(argv, 'e:p:d:b:svqR', [
+            'email=', 'pass=', 'directory=', 'books=', 'separate', 'verbose',
+            'quiet', 'readme'
+        ])
     except getopt.GetoptError:
         print(errorMessage)
         sys.exit(2)
@@ -178,6 +193,8 @@ def main(argv):
             verbose = True
         elif opt in ('-q', '--quiet'):
             quiet = True
+        elif opt in ('-R', '--readme'):
+            readme = True
 
     if verbose and quiet:
         print("Verbose and quiet cannot be used together.")
@@ -206,15 +223,19 @@ def main(argv):
         file_types = get_book_file_types(user, book['productId'])
         for file_type in file_types:
             if file_type in book_file_types:  # check if the file type entered is available by the current book
-                book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_').replace('/','')
+                book_name = book['productName'].replace(' ', '_').replace(
+                    '.', '_').replace(':', '_').replace('/', '')
                 if separate:
                     filename = f'{root_directory}/{book_name}/{book_name}.{file_type}'
                     move_current_files(root_directory, book_name)
+                    if readme:
+                        create_readme(f'{root_directory}/{book_name}', book)
                 else:
                     filename = f'{root_directory}/{book_name}.{file_type}'
                 # get url of the book to download
                 url = get_url_book(user, book['productId'], file_type)
-                if not os.path.exists(filename) and not os.path.exists(filename.replace('.code', '.zip')):
+                if not os.path.exists(filename) and not os.path.exists(
+                        filename.replace('.code', '.zip')):
                     download_book(filename, url)
                     make_zip(filename)
                 else:
