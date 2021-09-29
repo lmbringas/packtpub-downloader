@@ -412,8 +412,6 @@ def main(argv):
         if separate:
             filepath = f'{root_directory}/{book_name}'
             move_current_files(root_directory, book_name)
-            #if readme:
-            #  create_readme(f'{filepath}', book)
         else:
             filepath = f'{root_directory}'
         for file_type in file_types:
@@ -435,7 +433,6 @@ def main(argv):
                     tqdm.write(repr(e))
                     tqdm.write('Skipping')
         if separate and readme:
-            print (book)
             create_readme(f'{filepath}', book)
 
 
