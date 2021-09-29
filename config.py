@@ -18,8 +18,11 @@ AUTH_ENDPOINT = "auth-v1/users/tokens"
 # URL to get all your books, two params that i change are offset and limit, method GET
 PRODUCTS_ENDPOINT = "entitlements-v1/users/me/products?sort=createdAt:DESC&offset={offset}&limit={limit}"
 
-# URL to get book information from id
+# URL(BASE_STATIC) to get book information from id 
 PRODUCT_FROM_ID_ENDPOINT = "products/{id}/summary"
+
+# URL(BASE_STATIC) to get author information from id 
+AUTHOR_FROM_ID_ENDPOINT = "authors/{id}"
 
 # URL to get types , param is  book id, method GET
 URL_BOOK_TYPES_ENDPOINT = "products-v1/products/{book_id}/types"

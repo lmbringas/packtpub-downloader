@@ -9,10 +9,10 @@ import math
 import getopt
 import requests
 from tqdm import tqdm, trange
-from config import BASE_URL, BASE_STATIC_URL, PRODUCTS_ENDPOINT, PRODUCT_FROM_ID_ENDPOINT, URL_BOOK_TYPES_ENDPOINT, URL_BOOK_ENDPOINT
+from config import BASE_URL, BASE_STATIC_URL, PRODUCTS_ENDPOINT, PRODUCT_FROM_ID_ENDPOINT, URL_BOOK_TYPES_ENDPOINT, URL_BOOK_ENDPOINT, AUTHOR_FROM_ID_ENDPOINT
 from user import User
 
-error_message = 'Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -i <products id> -s -v -q]'
+error_message = 'Usage: main.py -e <email> -p <password> [-d <directory> -b <book file types> -i <products id> -sR -v -q]'
 
 
 # TODO: I should do a function that his only purpose is to request and return data
@@ -235,14 +235,63 @@ def does_dir_exist(directory):
             print(e)
             sys.exit(2)
 
+def get_author_info(author_id):
+    url = BASE_STATIC_URL + AUTHOR_FROM_ID_ENDPOINT.format(id=author_id)
 
+    r = requests.get(url)
+    rjson = r.json()
+    return rjson
+
+
+def get_book_info(book_id):
+    url = BASE_STATIC_URL + PRODUCT_FROM_ID_ENDPOINT.format(id=book_id)
+
+    r = requests.get(url)
+    rjson = r.json()
+    authors = []
+    
+
+    try:
+      for author in rjson.get('authors'):
+        authors.append(get_author_info(author).get('author')) 
+      data = {
+        'title': rjson.get('title'),
+        'authors': authors,
+        'isbn13': rjson.get('isbn13'),
+        'description': rjson.get('oneLiner'),
+        'pages': rjson.get('pages'),
+        'releaseDate': rjson.get('publicationDate')[:10],
+        'category': rjson.get('category'),
+        'homepage': f"https://subscription.packtpub.com{rjson.get('readUrl')}"
+      }
+    except:
+      pass
+
+    return data
+
+# TODO: Get link to Github repository where present (see book 9781789957754)
 def create_readme(path, book):
     filename = os.path.join(path, 'README.md')
-    with open(filename, 'w', encoding='utf-8') as file:
-        file.write('# ' + str(book['productName']) + '\n\n')
-        file.write('productId: ' + str(book['productId']) + '\n')
-        file.write('Release date: ' + str(book['releaseDate']) + '\n')
-    file.close()
+    try:
+      data = get_book_info(book['productId'])
+
+      with open(filename, 'w', encoding='utf-8') as file:
+          file.write(f"# {str(data['title'])}\n")
+          file.write('\n')
+          file.write(f"- By {', '.join(data['authors'])}\n")
+          file.write(f"- Publication date: {data['releaseDate']}\n")
+          file.write(f"- ISBN: {data['isbn13']}\n")
+          file.write(f"- Pages: {data['pages']}\n")
+          file.write('\n')
+          file.write(data['description'] + '\n')
+          file.write('\n')
+          file.write(f"* [Book Home Page]({data['homepage']})\n")
+          for k, v in book['files'].items():
+              file.write(f"* [{k.upper()}]({v})\n")
+          file.write('\n')
+          file.write('<!-- EOF -->')
+    except Exception as e:
+          pass
 
 
 def get_opts_args(argv):
@@ -358,17 +407,19 @@ def main(argv):
         # get the different file type of current book
         file_types = get_book_file_types(user, book['productId'])
         tqdm.write('Requested formats: ' + ','.join(book_file_types) + ' but only available: ' + ','.join(file_types))
+        book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_').replace('/','').replace('?','')
+        book['files'] = {}
+        if separate:
+            filepath = f'{root_directory}/{book_name}'
+            move_current_files(root_directory, book_name)
+            #if readme:
+            #  create_readme(f'{filepath}', book)
+        else:
+            filepath = f'{root_directory}'
         for file_type in file_types:
             if file_type in book_file_types:  # check if the file type entered is available by the current book
-                book_name = book['productName'].replace(' ', '_').replace('.', '_').replace(':', '_').replace('/','').replace('?','')
-                if separate:
-                    filename = f'{root_directory}/{book_name}/{book_name}.{file_type}'
-                    move_current_files(root_directory, book_name)
-                    if readme:
-                        create_readme(f'{root_directory}/{book_name}', book)
-                else:
-                    filename = f'{root_directory}/{book_name}.{file_type}'
-
+                filename = f'{filepath}/{book_name}.{file_type}'
+                book['files'][file_type] = f'{book_name}.{file_type}'
                 # implied check for pdf, epub, mobi, also avoid name collision when both code and video are available.
                 if os.path.exists(filename.replace('.code', '.code.zip').replace('.video', '.video.zip')):
                     if verbose:
@@ -383,6 +434,9 @@ def main(argv):
                 except PermissionError as e:
                     tqdm.write(repr(e))
                     tqdm.write('Skipping')
+        if separate and readme:
+            print (book)
+            create_readme(f'{filepath}', book)
 
 
 if __name__ == '__main__':

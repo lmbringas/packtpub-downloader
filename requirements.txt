@@ -7,7 +7,7 @@ chardet==3.0.4
 idna==2.8
 idna-ssl==1.1.0
 multidict==4.5.2
-requests==2.21.0
+requests==2.26.0
 tqdm==4.30.0
 typing-extensions==3.7.2
 urllib3==1.26.5
