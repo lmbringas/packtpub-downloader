@@ -39,6 +39,15 @@ class User:
         if r.status_code == 200:
             print("You are in!")
             return 'Bearer ' + r.json()['data']['access']
+        
+        r = requests.post(url,
+                          json={
+                              'username': self.username,
+                              'password': self.password
+                          })
+        if r.status_code == 200:
+            print("You are in!")
+            return 'Bearer ' + r.json()['data']['access']
 
         # except should happend when user and pass are incorrect
         print("Error login,  check user and password")
