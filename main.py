@@ -252,20 +252,20 @@ def get_book_info(book_id):
     
 
     try:
-      for author in rjson.get('authors'):
-        authors.append(get_author_info(author).get('author')) 
-      data = {
-        'title': rjson.get('title'),
-        'authors': authors,
-        'isbn13': rjson.get('isbn13'),
-        'description': rjson.get('oneLiner'),
-        'pages': rjson.get('pages'),
-        'releaseDate': rjson.get('publicationDate')[:10],
-        'category': rjson.get('category'),
-        'homepage': f"https://subscription.packtpub.com{rjson.get('readUrl')}"
-      }
+        for author in rjson.get('authors'):
+            authors.append(get_author_info(author).get('author')) 
+        data = {
+            'title': rjson.get('title'),
+            'authors': authors,
+            'isbn13': rjson.get('isbn13'),
+            'description': rjson.get('oneLiner'),
+            'pages': rjson.get('pages'),
+            'releaseDate': rjson.get('publicationDate')[:10],
+            'category': rjson.get('category'),
+            'homepage': f"https://subscription.packtpub.com{rjson.get('readUrl')}"
+        }
     except:
-      pass
+        pass
 
     return data
 
@@ -273,25 +273,25 @@ def get_book_info(book_id):
 def create_readme(path, book):
     filename = os.path.join(path, 'README.md')
     try:
-      data = get_book_info(book['productId'])
+        data = get_book_info(book['productId'])
 
-      with open(filename, 'w', encoding='utf-8') as file:
-          file.write(f"# {str(data['title'])}\n")
-          file.write('\n')
-          file.write(f"- By {', '.join(data['authors'])}\n")
-          file.write(f"- Publication date: {data['releaseDate']}\n")
-          file.write(f"- ISBN: {data['isbn13']}\n")
-          file.write(f"- Pages: {data['pages']}\n")
-          file.write('\n')
-          file.write(data['description'] + '\n')
-          file.write('\n')
-          file.write(f"* [Book Home Page]({data['homepage']})\n")
-          for k, v in book['files'].items():
-              file.write(f"* [{k.upper()}]({v})\n")
-          file.write('\n')
-          file.write('<!-- EOF -->')
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.write(f"# {str(data['title'])}\n")
+            file.write('\n')
+            file.write(f"- By {', '.join(data['authors'])}\n")
+            file.write(f"- Publication date: {data['releaseDate']}\n")
+            file.write(f"- ISBN: {data['isbn13']}\n")
+            file.write(f"- Pages: {data['pages']}\n")
+            file.write('\n')
+            file.write(data['description'] + '\n')
+            file.write('\n')
+            file.write(f"* [Book Home Page]({data['homepage']})\n")
+            for k, v in book['files'].items():
+                file.write(f"* [{k.upper()}]({v})\n")
+            file.write('\n')
+            file.write('<!-- EOF -->')
     except Exception as e:
-          pass
+        pass
 
 
 def get_opts_args(argv):
